@@ -333,6 +333,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     }
 
     controller.userInfo = res.data;
+    Userdata.userToken = controller.userInfo!.token;
     controller.updateData["id"] = controller.userInfo!.id;
   }
 

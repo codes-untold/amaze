@@ -102,8 +102,7 @@ class _AccountCreate2State extends State<AccountCreate2> {
                             Services().showToast("select category");
                           } else {
                             print(appController.updateData);
-                            appController.updateData["profileImage"] =
-                                "testImageUrl";
+
                             Navigator.push(
                               context,
                               MaterialPageRoute(

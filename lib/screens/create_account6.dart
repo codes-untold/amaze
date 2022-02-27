@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 
@@ -8,7 +9,9 @@ import 'package:temple/components/category_select.dart';
 import 'package:temple/components/custom_block.dart';
 import 'package:temple/components/solid_button.dart';
 import 'package:temple/controller/logic_controller.dart';
+import 'package:temple/models/bank_model.dart';
 import 'package:temple/utils/constants.dart';
+import 'package:http/http.dart' as http;
 import 'package:temple/utils/services.dart';
 
 import 'create_account7.dart';
@@ -24,22 +27,28 @@ class _AccountCreate6State extends State<AccountCreate6> {
   TextEditingController controller = TextEditingController();
   final formKeyy = GlobalKey<FormState>();
 
-  static const menuItems = <String>[
-    "Guaranty Trust Bank",
-  ];
+  List<BankModel> menuItems = [];
+  String? bankCode;
+  String? accountName;
+  String? accountNumber;
 
   late final List<PopupMenuItem<String>> _popUptimeItems;
   String? selectedBankName;
   bool isLoading = false;
-  var userAccount;
 
   @override
   void initState() {
     super.initState();
-    _popUptimeItems = menuItems
-        .map((String value) => PopupMenuItem(
-              child: Text(value),
-              value: value,
+
+    AppController controller = Provider.of(context, listen: false);
+
+    _popUptimeItems = controller.banks
+        .map((BankModel value) => PopupMenuItem(
+              onTap: () {
+                bankCode = value.code;
+              },
+              child: Text(value.name),
+              value: value.name,
             ))
         .toList();
   }
@@ -78,7 +87,7 @@ class _AccountCreate6State extends State<AccountCreate6> {
                                 const SizedBox(
                                   height: 20,
                                 ),
-                                userAccount == null
+                                accountName == null
                                     ? Column(
                                         children: [
                                           Container(
@@ -121,26 +130,21 @@ class _AccountCreate6State extends State<AccountCreate6> {
                                           Form(
                                             key: formKeyy,
                                             child: TextFormField(
+                                              onSaved: (value) {
+                                                print("ffff");
+                                              },
                                               onChanged: (value) {
-                                                setState(() {
-                                                  isLoading = true;
-                                                });
-
-                                                Future.delayed(
-                                                    const Duration(seconds: 2),
-                                                    () {
-                                                  setState(() {
-                                                    if (selectedBankName ==
-                                                        null) {
-                                                      Services().showToast(
-                                                          "select bank");
-                                                      isLoading = false;
-                                                      return;
-                                                    }
-                                                    isLoading = false;
-                                                    userAccount = "fetched";
-                                                  });
-                                                });
+                                                if (bankCode == null) {
+                                                  Services()
+                                                      .showToast("select bank");
+                                                } else {
+                                                  if (value.length == 10) {
+                                                    verifyAccount()
+                                                        .then((value) {})
+                                                        .onError((error,
+                                                            stackTrace) {});
+                                                  }
+                                                }
                                               },
                                               validator: (value) {
                                                 if (value!.isEmpty) {
@@ -207,28 +211,28 @@ class _AccountCreate6State extends State<AccountCreate6> {
                                             Column(
                                               crossAxisAlignment:
                                                   CrossAxisAlignment.start,
-                                              children: const [
+                                              children: [
                                                 Text(
-                                                  "Guaranty Trust Bank",
-                                                  style: TextStyle(
+                                                  selectedBankName!,
+                                                  style: const TextStyle(
                                                       fontWeight:
                                                           FontWeight.w600,
                                                       color: Color(0xff1d1a40)),
                                                 ),
-                                                SizedBox(
+                                                const SizedBox(
                                                   height: 5,
                                                 ),
                                                 Text(
-                                                  "Ademola Gbadamosi",
-                                                  style: TextStyle(
+                                                  accountName!,
+                                                  style: const TextStyle(
                                                       color: Palette.gray2),
                                                 ),
-                                                SizedBox(
+                                                const SizedBox(
                                                   height: 5,
                                                 ),
                                                 Text(
-                                                  "23456 - *****",
-                                                  style: TextStyle(
+                                                  "${accountNumber!.substring(0, 4)}- *****",
+                                                  style: const TextStyle(
                                                       color: Palette.gray2),
                                                 ),
                                               ],
@@ -236,7 +240,7 @@ class _AccountCreate6State extends State<AccountCreate6> {
                                             GestureDetector(
                                               onTap: () {
                                                 setState(() {
-                                                  userAccount = null;
+                                                  accountName = null;
                                                 });
                                               },
                                               child: const CircleAvatar(
@@ -263,7 +267,14 @@ class _AccountCreate6State extends State<AccountCreate6> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: SolidButton(() {
-                    if (selectedBankName != null) {
+                    if (accountName != null) {
+                      appController.updateData["bankDetails"] = {};
+                      appController.updateData["bankDetails"]["bankCode"] =
+                          bankCode;
+                      appController.updateData["bankDetails"]["accountNumber"] =
+                          accountNumber;
+                      appController.updateData["bankDetails"]["accountName"] =
+                          accountName;
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -283,5 +294,37 @@ class _AccountCreate6State extends State<AccountCreate6> {
         ),
       );
     });
+  }
+
+  Future<void> verifyAccount() async {
+    var body = {"account_number": controller.text, "account_bank": bankCode};
+    var url = Uri.parse(
+        "https://api.paystack.co/bank/resolve?account_number=${controller.text}&bank_code=$bankCode");
+    setState(() {
+      isLoading = true;
+    });
+    http.get(url, headers: {
+      'Authorization': 'Bearer sk_live_69fa43ee7d62e702f40fbad9c7a90baa53a4374a'
+    }).then((value) {
+      print(value.body);
+      setState(() {
+        isLoading = false;
+      });
+      var bankData = jsonDecode(value.body);
+      if (bankData["status"] == false) {
+        Services().showToast("could not resolve account name");
+      } else {
+        setState(() {
+          accountName = bankData["data"]["account_name"];
+          accountNumber = bankData["data"]["account_number"];
+        });
+      }
+    }).onError((error, stackTrace) {
+      setState(() {
+        isLoading = false;
+      });
+    });
+
+    // print(response.body);
   }
 }

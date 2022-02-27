@@ -1,3 +1,5 @@
+import 'dart:collection';
+import 'dart:convert';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -6,10 +8,13 @@ import 'package:provider/provider.dart';
 import 'package:temple/components/category_select.dart';
 import 'package:temple/components/solid_button.dart';
 import 'package:temple/controller/logic_controller.dart';
+import 'package:temple/models/bank_model.dart';
 import 'package:temple/models/categories.dart';
+import 'package:temple/models/services_model.dart';
 import 'package:temple/network/api_routes.dart';
 import 'package:temple/network/api_service.dart';
 import 'package:temple/utils/constants.dart';
+import 'package:http/http.dart' as http;
 
 class CategorySheet extends StatefulWidget {
   CategorySheet({Key? key}) : super(key: key);
@@ -35,6 +40,7 @@ class _CategorySheetState extends State<CategorySheet> {
     getCategories().then((value) {
       WidgetsBinding.instance!.addPostFrameCallback((_) {
         controller.idleScreen();
+        getBanks().then((value) {});
       });
     }).onError((error, stackTrace) {
       WidgetsBinding.instance!.addPostFrameCallback((_) {
@@ -151,9 +157,24 @@ class _CategorySheetState extends State<CategorySheet> {
         ApiRoutes.onboarding.getCategories,
         converter: CategoryResponseModel.fromList);
 
-    //loop through list and append list of addresses to address models
     for (int i = 0; i < (res.data!.data).length; i++) {
       controller.categoryList.add(CategoryModel.fromMap(res.data!.data[i]));
+    }
+  }
+
+  Future<void> getBanks() async {
+    AppController controller = Provider.of(context, listen: false);
+
+    var url = Uri.parse('https://api.paystack.co/bank?country=nigeria');
+    var response = await http.get(url, headers: {
+      'Authorization': 'Bearer sk_live_69fa43ee7d62e702f40fbad9c7a90baa53a4374a'
+    });
+
+    var bankList = jsonDecode(response.body);
+    List listOfBanks = bankList["data"] as List;
+    print(listOfBanks);
+    for (int i = 0; i < listOfBanks.length; i++) {
+      controller.banks.add(BankModel.fromMap(listOfBanks[i]));
     }
   }
 }

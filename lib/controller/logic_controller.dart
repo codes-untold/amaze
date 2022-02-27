@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:temple/models/bank_model.dart';
 import 'package:temple/models/categories.dart';
+import 'package:temple/models/services_model.dart';
 import 'package:temple/models/signup_model.dart';
 
 class AppController extends ChangeNotifier {
   CategoryModel? primaryCategory;
   bool isScreenBusy = false;
   SignUpResponseModel? userInfo;
+  List<BankModel> banks = [];
+  List<ServicesModel> serviceList = [];
+  ServicesModel? selectedService;
 
   List passwordFieldChecks = [];
   List<CategoryModel> categoryList = [];

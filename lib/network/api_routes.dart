@@ -15,4 +15,6 @@ class ApiRoutes {
 class _OnboardingRoutes {
   final signUp = "/User/account/signup";
   final getCategories = "/App/categories/0";
+  final getServices = "/App/amaze/services";
+  final updateProfile = "/User/account/celebrity/update";
 }

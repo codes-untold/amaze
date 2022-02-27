@@ -98,6 +98,7 @@ class _AccountCreate3State extends State<AccountCreate3> {
                     if (_imageFile == null) {
                       Services().showToast("upload picture");
                     } else {
+                      appController.updateData["profileImage"] = "testImageUrl";
                       Navigator.push(
                         context,
                         MaterialPageRoute(

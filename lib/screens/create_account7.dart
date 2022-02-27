@@ -144,6 +144,8 @@ class _AccountCreate7State extends State<AccountCreate7> {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: SolidButton(() {
                     if (file != null) {
+                      appController.updateData["identificationDocument"] =
+                          "testFileUrl";
                       Navigator.push(
                           context,
                           MaterialPageRoute(

@@ -3,11 +3,15 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
 import 'package:provider/provider.dart';
 import 'package:temple/components/category_select.dart';
 import 'package:temple/components/custom_block.dart';
 import 'package:temple/components/solid_button.dart';
 import 'package:temple/controller/logic_controller.dart';
+import 'package:temple/models/profile_model.dart';
+import 'package:temple/network/api_routes.dart';
+import 'package:temple/network/api_service.dart';
 import 'package:temple/utils/constants.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:temple/utils/services.dart';
@@ -31,86 +35,103 @@ class _AccountCreate8State extends State<AccountCreate8> {
   @override
   Widget build(BuildContext context) {
     return Consumer<AppController>(builder: (context, appController, child) {
-      return Scaffold(
-        resizeToAvoidBottomInset: false,
-        backgroundColor: const Color(0xffE5E5E5),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          CustomBlock(
-                              "ticket",
-                              10,
-                              0,
-                              "Done ${appController.userInfo!.firstName} ⛱️️,",
-                              "Personal social accounts",
-                              "Please enter the url and/or identification for your social media accounts (optional)"),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(
-                                  height: 40,
-                                ),
-                                customRow(
-                                    controller, null, "Website (Optional)"),
-                                const SizedBox(
-                                  height: 20,
-                                ),
-                                Form(
-                                  key: _formKey,
-                                  child: Column(
-                                    children: [
-                                      customRow(controller1, "instagram",
-                                          "Instagram"),
-                                      const SizedBox(
-                                        height: 20,
-                                      ),
-                                      customRow(
-                                          controller2, "twitter", "Twitter"),
-                                      const SizedBox(
-                                        height: 20,
-                                      ),
-                                      customRow(
-                                          controller3, "facebook", "Facebook"),
-                                      const SizedBox(
-                                        height: 40,
-                                      ),
-                                    ],
+      return ModalProgressHUD(
+        inAsyncCall: appController.isScreenBusy,
+        child: Scaffold(
+          resizeToAvoidBottomInset: false,
+          backgroundColor: const Color(0xffE5E5E5),
+          body: SafeArea(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CustomBlock(
+                                "ticket",
+                                10,
+                                0,
+                                "Done ${appController.userInfo!.firstName} ⛱️️,",
+                                "Personal social accounts",
+                                "Please enter the url and/or identification for your social media accounts (optional)"),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(
+                                    height: 40,
                                   ),
-                                ),
-                              ],
-                            ),
-                          )
-                        ],
-                      ),
-                    ],
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: SolidButton(() {
-                      if (_formKey.currentState!.validate()) {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => AccountCreate9()));
-                      }
-                    }),
-                  ),
-                  const SizedBox(
-                    height: 40,
-                  ),
-                ],
+                                  customRow(
+                                      controller, null, "Website (Optional)"),
+                                  const SizedBox(
+                                    height: 20,
+                                  ),
+                                  Form(
+                                    key: _formKey,
+                                    child: Column(
+                                      children: [
+                                        customRow(controller1, "instagram",
+                                            "Instagram"),
+                                        const SizedBox(
+                                          height: 20,
+                                        ),
+                                        customRow(
+                                            controller2, "twitter", "Twitter"),
+                                        const SizedBox(
+                                          height: 20,
+                                        ),
+                                        customRow(controller3, "facebook",
+                                            "Facebook"),
+                                        const SizedBox(
+                                          height: 40,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          ],
+                        ),
+                      ],
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: SolidButton(() {
+                        if (_formKey.currentState!.validate()) {
+                          appController.updateData["twitterUrl"] =
+                              controller2.text;
+                          appController.updateData["facebookUrl"] =
+                              controller3.text;
+                          appController.updateData["instagramUrl"] =
+                              controller1.text;
+                          appController.updateData["websiteUrl"] =
+                              controller.text;
+                          print(appController.updateData);
+                          updateUserProfile().then((value) {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => AccountCreate9()));
+                          }).onError((error, stackTrace) {
+                            appController.idleScreen();
+                          });
+                        }
+                      }),
+                    ),
+                    const SizedBox(
+                      height: 40,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -167,5 +188,15 @@ class _AccountCreate8State extends State<AccountCreate8> {
         ),
       ],
     );
+  }
+
+  Future<void> updateUserProfile() async {
+    AppController controller = Provider.of(context, listen: false);
+
+    controller.busyScreen();
+    var res = await ApiService.put<ProfileModel>(
+        ApiRoutes.onboarding.updateProfile, controller.updateData,
+        converter: ProfileModel.fromMap);
+    controller.idleScreen();
   }
 }

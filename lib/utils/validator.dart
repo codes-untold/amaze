@@ -36,19 +36,12 @@ class TextFieldValidator {
   }
 
   static String? validatePassword(
-      String? password, String? confirmationPassword) {
+    String? password,
+  ) {
     if (password!.isEmpty) {
       return emptyPasswordField;
     } else if (password.length < 6 || password.length > 20) {
       return passwordLengthError;
-    } else if (!password.contains(RegularExpression.numberOnly)) {
-      return passwordPatternError;
-    }
-
-    if (confirmationPassword != null &&
-        confirmationPassword.isNotEmpty &&
-        confirmationPassword != password) {
-      return passwordMismatch;
     }
 
     return null;

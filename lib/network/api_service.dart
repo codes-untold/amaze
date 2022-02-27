@@ -45,6 +45,7 @@ class ApiService {
       Function? converter}) async {
     //......
     //......
+    var data;
     Response response;
     try {
       final inner.IOClient _client = getClient();
@@ -105,7 +106,13 @@ class ApiService {
 
       var decodedRsp = json.decode(response.body.toString());
       List<String> errorList = [];
-      var data = decodedRsp["result"];
+
+      if (options != null) {
+        data = decodedRsp["data"];
+      } else {
+        data = decodedRsp["result"];
+      }
+
       var errors = decodedRsp["errors"];
       if (errors != null) errorList = List<String>.from(errors);
 
@@ -142,9 +149,13 @@ class ApiService {
         // display error msg from server, else a generic server error msg
         // "Oops! Something went wrong.."
         return Future.value(
-            ApiResponse<T>()); // remove this line after handling with modal
+            ApiResponse<T>()); // remove this line afdatater handling with modal
       } else {
-        Services().showToast(e.toString());
+        if (data["errors"] != null) {
+          print(data["errors"][0]);
+          Services().showToast(data["errors"][0]);
+        }
+
         return Future.error(e);
       }
     }

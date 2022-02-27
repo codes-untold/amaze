@@ -48,7 +48,11 @@ class CustomTextField extends StatelessWidget {
               }
             },
             validator: (value) {
-              return TextFieldValidator.validateField(type, value);
+              if (fieldTag == "Password") {
+                return TextFieldValidator.validatePassword(value);
+              } else {
+                return TextFieldValidator.validateField(type, value);
+              }
             },
             decoration: const InputDecoration(
                 isCollapsed: true,

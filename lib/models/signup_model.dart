@@ -54,6 +54,7 @@ class SignUpRequestModel {
 }
 
 class SignUpResponseModel {
+  String token;
   String id;
   String firstName;
   String lastName;
@@ -64,7 +65,7 @@ class SignUpResponseModel {
   String location;
 
   SignUpResponseModel(this.id, this.firstName, this.lastName, this.phoneNumber,
-      this.email, this.location, this.userType);
+      this.email, this.location, this.userType, this.token);
 
   static SignUpResponseModel fromMap(Map<String, dynamic> map) =>
       SignUpResponseModel(
@@ -74,7 +75,8 @@ class SignUpResponseModel {
           map["user"]["phoneNumber"],
           map["user"]["email"],
           map["user"]["location"],
-          map["user"]["userType"]);
+          map["user"]["userType"],
+          map["token"]);
 
   Map toJson() => {
         "firstName": firstName,

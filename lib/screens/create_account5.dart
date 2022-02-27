@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 
@@ -10,6 +11,7 @@ import 'package:temple/components/solid_button.dart';
 import 'package:temple/controller/logic_controller.dart';
 import 'package:temple/utils/constants.dart';
 import 'package:temple/utils/services.dart';
+import 'package:http/http.dart' as http;
 
 import 'create_account6.dart';
 
@@ -59,9 +61,9 @@ class _AccountCreate5State extends State<AccountCreate5> {
                                 ),
                                 Container(
                                   padding: const EdgeInsets.all(10),
-                                  child: const Text(
-                                    "Video Shoutout - Fans",
-                                    style: TextStyle(
+                                  child: Text(
+                                    appController.selectedService!.name,
+                                    style: const TextStyle(
                                         color: Colors.white, fontSize: 12),
                                   ),
                                   decoration: BoxDecoration(
@@ -197,6 +199,8 @@ class _AccountCreate5State extends State<AccountCreate5> {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: SolidButton(() {
                     if (_formKey.currentState!.validate()) {
+                      appController.updateData["serviceInformation"][0]
+                          ["fanPrice"] = controller.text;
                       Navigator.push(
                         context,
                         MaterialPageRoute(
